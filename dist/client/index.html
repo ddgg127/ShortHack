@@ -35,6 +35,11 @@
           Заявки
           <span class="nav-count" id="navCount">3</span>
         </a>
+        <a class="nav-item" href="#mail" data-view-link="mail">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+          Почта
+          <span class="nav-count" id="mailCount">4</span>
+        </a>
         <a class="nav-item" href="#knowledge">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22z"/><path d="M4 5.5A3.5 3.5 0 0 0 7.5 9H20"/></svg>
           База знаний
@@ -225,6 +230,21 @@
         <p>База знаний появится на следующем этапе проекта.</p>
       </section>
 
+      <section class="mail-page app-view" id="mail" data-view="mail" hidden>
+        <div class="requests-page-heading mail-page-heading">
+          <div>
+            <p class="eyebrow">Входящие обращения</p>
+            <h2>Почта <span id="totalMail">0</span></h2>
+            <p>Письма и расшифровки разговоров в одном потоке. Отправьте обращение на анализ, чтобы получить структуру заявки.</p>
+          </div>
+          <div class="mail-legend" aria-label="Типы обращений">
+            <span><i class="mail-dot"></i> Письмо</span>
+            <span><i class="call-dot"></i> Разговор</span>
+          </div>
+        </div>
+        <div class="mail-list" id="mailList"></div>
+      </section>
+
       <section class="requests-page app-view" id="requests" data-view="requests" hidden>
         <div class="requests-page-heading">
           <div>
@@ -253,7 +273,7 @@
           </label>
           <label class="select-field">Статус
             <select id="statusFilter">
-              <option value="all">Любой</option><option>Новая</option><option>В работе</option><option>Решена</option>
+              <option value="all">Любой</option><option>Новая</option><option>В работе</option><option>Решена</option><option>Передана старшему</option>
             </select>
           </label>
           <label class="select-field sort-field">Порядок
@@ -279,6 +299,36 @@
     </main>
   </div>
 
+  <div class="modal-backdrop" id="detailModal" hidden>
+    <section class="edit-modal detail-modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+      <header class="modal-header">
+        <div><p class="eyebrow">Карточка обращения</p><h2 id="detailTitle">Заявка <span id="detailTicketId"></span></h2></div>
+        <button class="icon-button" id="closeDetail" type="button" aria-label="Закрыть заявку">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div class="detail-status-line">
+        <span class="status-pill" id="detailStatus"></span>
+        <span id="detailCreated"></span>
+      </div>
+      <div class="detail-view-grid">
+        <section class="detail-view-block full"><span>Текст обращения</span><p id="detailDescription"></p></section>
+        <section class="detail-view-block full"><span>Краткое описание</span><p id="detailSummary"></p></section>
+        <section class="detail-view-block"><span>Категория</span><p id="detailCategory"></p></section>
+        <section class="detail-view-block"><span>Приоритет</span><p id="detailPriority"></p></section>
+        <section class="detail-view-block full"><span>Нужно уточнить</span><p id="detailMissing"></p></section>
+        <section class="detail-view-block full"><span>Следующий шаг</span><p id="detailNextAction"></p></section>
+        <section class="detail-view-block full"><span>Черновик ответа</span><p id="detailDraft"></p></section>
+      </div>
+      <p class="locked-note" id="detailLockedNote" hidden>Заявка передана старшему оператору. Редактирование и изменение статуса недоступны.</p>
+      <footer class="detail-actions">
+        <button class="secondary-button" id="detailEditButton" type="button">Редактировать</button>
+        <button class="secondary-button success-button" id="resolveTicketButton" type="button">Отметить решённой</button>
+        <button class="primary-button compact escalate-button" id="escalateTicketButton" type="button">Передать старшему оператору</button>
+      </footer>
+    </section>
+  </div>
+
   <div class="modal-backdrop" id="editModal" hidden>
     <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <header class="modal-header">
@@ -297,7 +347,7 @@
           </label>
           <label class="form-field">Категория
             <select id="editCategory" required>
-              <option>Учётная запись</option><option>Сеть и подключения</option><option>Образовательная платформа</option><option>Оборудование</option><option>Другое</option>
+              <option>Учётная запись</option><option>Сеть и подключения</option><option>Образовательная платформа</option><option>Оборудование</option><option>Программное обеспечение</option><option>Другое</option>
             </select>
           </label>
           <label class="form-field">Приоритет

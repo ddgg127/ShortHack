@@ -3,5 +3,5 @@
 !.env.example
 node_modules/
 .sites-runtime/
+.wrangler/
 site-package.tar.gz
-
