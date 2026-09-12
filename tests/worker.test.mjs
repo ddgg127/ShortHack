@@ -17,8 +17,8 @@ test('analysis returns a normalized structured result', async () => {
       summary: 'Не удаётся войти в личный кабинет.',
       category: 'Учётная запись',
       priority: 'Высокий',
-      missing: 'Корпоративная почта.',
-      nextAction: 'Проверить учётную запись.',
+      missing: ['Корпоративная почта.', 'Номер телефона.'],
+      nextAction: 'Проверить учётную запись.; Передать заявку оператору.',
       draft: 'Здравствуйте! Пришлите корпоративную почту.',
       confidence: 93
     }) } }]
@@ -40,6 +40,8 @@ test('analysis returns a normalized structured result', async () => {
     assert.equal(result.category, 'Учётная запись');
     assert.equal(result.confidence, 93);
     assert.equal(result.description, 'Не могу войти, доступ нужен сегодня.');
+    assert.equal(result.missing, '1. Корпоративная почта.\n2. Номер телефона.');
+    assert.equal(result.nextAction, '1. Проверить учётную запись.\n2. Передать заявку оператору.');
   } finally {
     globalThis.fetch = originalFetch;
   }

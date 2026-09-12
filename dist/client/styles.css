@@ -101,6 +101,10 @@ body {
 button, textarea { font: inherit; }
 button { color: inherit; }
 
+::selection { color: var(--button-text); background: var(--accent); }
+textarea { caret-color: var(--accent); }
+textarea::selection { color: var(--button-text); background: var(--accent); }
+
 .app-shell { min-height: 100vh; }
 
 .sidebar {
@@ -255,7 +259,7 @@ textarea::placeholder { color: var(--muted-2); }
 .icon-button.small { width: 32px; height: 32px; border-radius: 9px; }
 .summary-card, .field-card, .details-card, .draft-card { border: 1px solid var(--line); background: var(--input); }
 .summary-card { padding: 15px 16px; border-radius: 13px; }
-.field-label { display: block; color: var(--muted-2); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; }
+.field-label { display: block; color: var(--surface-text); font-size: .76rem; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; }
 .summary-card p { margin: 7px 0 0; font-size: .9rem; font-weight: 600; line-height: 1.55; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
 .field-card { padding: 13px 15px; border-radius: 12px; }
@@ -269,11 +273,11 @@ textarea::placeholder { color: var(--muted-2); }
 .detail-icon.question { color: var(--warning); background: rgba(255,185,104,.09); }
 .detail-icon.action { color: var(--blue); background: rgba(109,169,255,.09); }
 .detail-icon svg { width: 15px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.detail-row p { margin: 4px 0 0; color: var(--surface-text); font-size: .79rem; line-height: 1.5; }
+.detail-row p { margin: 6px 0 0; color: var(--surface-text); font-size: .81rem; line-height: 1.55; white-space: pre-line; }
 .draft-card { margin-top: 10px; padding: 13px 15px; border-radius: 13px; }
 .draft-heading { display: flex; align-items: center; justify-content: space-between; }
 .draft-heading button { padding: 0; border: 0; color: var(--accent); background: transparent; font-size: .74rem; cursor: pointer; }
-.draft-card p { margin: 8px 0 0; padding: 7px 0; color: var(--surface-text-soft); font-size: .78rem; line-height: 1.55; outline: none; }
+.draft-card p { margin: 8px 0 0; padding: 7px 0; color: var(--surface-text); font-size: .8rem; line-height: 1.6; outline: none; }
 .draft-card p[contenteditable="true"] { padding: 7px 9px; border-radius: 8px; background: var(--editable); box-shadow: inset 0 0 0 1px var(--accent); }
 .create-button { min-height: 45px; margin-top: 12px; color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
 .create-button:hover { color: var(--button-text); }
@@ -331,8 +335,8 @@ textarea::placeholder { color: var(--muted-2); }
 .meta-chip.priority-high { color: var(--warning); }
 .meta-chip.priority-low { color: var(--blue); }
 .ticket-details { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
-.ticket-detail span { display: block; margin-bottom: 3px; color: var(--muted-2); font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
-.ticket-detail p { margin: 0; color: var(--surface-text); font-size: .78rem; line-height: 1.5; }
+.ticket-detail span { display: block; margin-bottom: 4px; color: var(--surface-text); font-size: .71rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.ticket-detail p { margin: 0; color: var(--surface-text); font-size: .8rem; line-height: 1.55; white-space: pre-line; }
 .ticket-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: 2px; }
 .ticket-date { color: var(--muted-2); font-size: .72rem; }
 .no-results { padding: 70px 20px; border: 1px dashed var(--line); border-radius: 18px; color: var(--muted); text-align: center; }
