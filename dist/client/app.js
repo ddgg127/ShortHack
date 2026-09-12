@@ -3,17 +3,16 @@ const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const STORAGE_KEY = 'line-demo-tickets-v3';
 const PREVIOUS_STORAGE_KEYS = ['line-demo-tickets-v2', 'pulse-demo-tickets-v2'];
 const MAIL_STORAGE_KEY = 'line-demo-mail-v1';
-const THEME_STORAGE_KEY = 'line-theme';
+const PENDING_SOLUTIONS_KEY = 'line-pending-solutions-v1';
+const THEME_STORAGE_KEY = 'line-theme-v2';
 const ESCALATED_STATUS = 'Передана старшему';
 const THEMES = { light: 'Светлая', dark: 'Тёмная', graphite: 'Серо-чёрная', sber: 'Сбер', polar: 'Полярная ночь', ember: 'Тёплый графит' };
 
 const seedTickets = [
   { id: 24, description: 'В личном кабинете преподавателя не загружается ведомость группы ББИ-25-1. После выбора дисциплины страница остаётся пустой.', summary: 'Не загружается ведомость выбранной учебной группы.', category: 'Образовательная платформа', priority: 'Высокий', status: 'В работе', missing: '1. Название дисциплины.\n2. Браузер и время последней попытки.', nextAction: '1. Проверить доступность сервиса.\n2. Передать данные команде образовательной платформы.', draft: 'Здравствуйте! Мы уже проверяем загрузку ведомости. Уточните, пожалуйста, название дисциплины, браузер и время последней попытки входа.', source: 'Почта', confidence: 96, date: '2026-09-12T08:48:00' },
   { id: 23, description: 'Ноутбук видит корпоративную сеть, но подключиться к Wi-Fi в главном корпусе не получается. Появляется сообщение об ошибке авторизации.', summary: 'Не удаётся подключиться к корпоративному Wi-Fi.', category: 'Сеть и подключения', priority: 'Обычный', status: 'Новая', missing: '1. Модель устройства.\n2. Операционная система.\n3. Название точки доступа.', nextAction: '1. Запросить параметры устройства.\n2. Передать заявку сетевой команде.', draft: 'Здравствуйте! Подскажите модель устройства, версию операционной системы и название Wi-Fi сети. Это поможет проверить настройки подключения.', source: 'Телефон', confidence: 91, date: '2026-09-12T08:26:00' },
-  { id: 22, description: 'Забыл пароль от личного кабинета, восстановление через почту не приходит. Нужен доступ к расписанию на сегодня.', summary: 'Не приходит письмо для восстановления пароля.', category: 'Учётная запись', priority: 'Высокий', status: 'Решена', missing: 'Корпоративная почта пользователя.', nextAction: 'Проверить учётную запись и запустить повторную отправку письма.', draft: 'Здравствуйте! Доступ восстановлен, повторное письмо отправлено. Проверьте папку «Спам», если сообщение не появится во входящих.', source: 'Почта', confidence: 98, date: '2026-09-12T07:55:00' },
   { id: 21, description: 'Принтер в кабинете 412 печатает пустые листы, замена картриджа не помогла. Нужно распечатать документы к совещанию.', summary: 'Принтер печатает пустые листы после замены картриджа.', category: 'Оборудование', priority: 'Обычный', status: ESCALATED_STATUS, missing: 'Модель принтера и инвентарный номер.', nextAction: 'Назначить выезд специалиста по оборудованию.', draft: 'Здравствуйте! Мы направим специалиста в кабинет 412. Пришлите, пожалуйста, модель и инвентарный номер принтера.', source: 'Телефон', confidence: 89, date: '2026-09-11T16:40:00' },
-  { id: 20, description: 'Проектор в аудитории включается, но не показывает изображение с ноутбука через HDMI. Кабель подключён, источник выбран.', summary: 'Проектор не получает изображение по HDMI.', category: 'Оборудование', priority: 'Низкий', status: 'Новая', missing: 'Номер аудитории и модель проектора.', nextAction: 'Проверить кабель и вход проектора на месте.', draft: 'Здравствуйте! Уточните номер аудитории и модель проектора. Специалист проверит подключение и HDMI-вход.', source: 'Почта', confidence: 87, date: '2026-09-11T14:12:00' },
-  { id: 19, description: 'В курсе по аналитике пропала кнопка отправки домашнего задания. Срок сдачи завтра, файл уже подготовлен.', summary: 'Нет кнопки отправки домашнего задания в курсе.', category: 'Образовательная платформа', priority: 'Высокий', status: 'Решена', missing: 'Ссылка на курс и номер задания.', nextAction: 'Проверить сроки и настройки публикации задания.', draft: 'Здравствуйте! Доступ к отправке восстановлен. Обновите страницу курса и попробуйте загрузить файл повторно.', source: 'Почта', confidence: 94, date: '2026-09-10T11:30:00' }
+  { id: 20, description: 'Проектор в аудитории включается, но не показывает изображение с ноутбука через HDMI. Кабель подключён, источник выбран.', summary: 'Проектор не получает изображение по HDMI.', category: 'Оборудование', priority: 'Низкий', status: 'Новая', missing: 'Номер аудитории и модель проектора.', nextAction: 'Проверить кабель и вход проектора на месте.', draft: 'Здравствуйте! Уточните номер аудитории и модель проектора. Специалист проверит подключение и HDMI-вход.', source: 'Почта', confidence: 87, date: '2026-09-11T14:12:00' }
 ];
 
 const seedMail = [
@@ -21,6 +20,23 @@ const seedMail = [
   { id: 'call-103', type: 'Расшифровка разговора', sender: 'Михаил Орлов', address: 'Входящий звонок · 3:42', subject: 'Не работает проектор в аудитории 305', date: '2026-09-12T09:54:00', text: 'Оператор: Добрый день, служба поддержки. Пользователь: Здравствуйте. В 305 аудитории проектор включается, но экран синий. Ноутбук подключили по HDMI, источник HDMI 1 выбрали. Через двадцать минут начинается лекция. Оператор: Индикатор на кабеле горит? Пользователь: Да, но другого кабеля рядом нет.' },
   { id: 'mail-102', type: 'Письмо', sender: 'Илья Ветров', address: 'i.vetrov@example.ru', subject: 'Пропала кнопка отправки задания', date: '2026-09-12T09:11:00', text: 'Здравствуйте. В курсе «Основы анализа данных» у задания №4 нет кнопки «Отправить». Дедлайн сегодня вечером, файл готов. Страница перезагружена, пробовал в двух браузерах — без результата.' },
   { id: 'call-101', type: 'Расшифровка разговора', sender: 'Елена Соколова', address: 'Входящий звонок · 5:06', subject: 'Не подключается рабочий VPN', date: '2026-09-12T08:37:00', text: 'Оператор: Что происходит после запуска VPN? Пользователь: Появляется окно «Ошибка проверки сертификата». Вчера всё работало. Я дома, интернет есть, сайты открываются. Оператор: Обновления системы устанавливали? Пользователь: Да, Windows обновился перед выключением. Мне нужен доступ к внутренней системе до совещания в 11:00.' }
+  ,{ id: 'mail-100', type: 'Письмо', sender: 'Мария Крылова', address: 'm.krylova@example.ru', subject: 'Не открывается файл в облачном хранилище', date: '2026-09-12T08:04:00', text: 'Здравствуйте! В общей папке кафедры не открывается таблица с расписанием практик. Другие файлы доступны, а у этого появляется сообщение «Недостаточно прав». Коллеги файл видят. Прошу помочь восстановить доступ.' }
+  ,{ id: 'call-099', type: 'Расшифровка разговора', sender: 'Сергей Павлов', address: 'Входящий звонок · 4:18', subject: 'Микрофон не работает в видеоконференции', date: '2026-09-12T07:46:00', text: 'Оператор: Вас не слышно только в одной программе? Пользователь: Да, в браузере микрофон работает, а в приложении для конференций — нет. Оператор: Какое устройство выбрано в настройках? Пользователь: Встроенный микрофон ноутбука, но индикатор звука не двигается.' }
+  ,{ id: 'mail-098', type: 'Письмо', sender: 'Алексей Романов', address: 'a.romanov@example.ru', subject: 'Ошибка при установке учебной программы', date: '2026-09-11T17:22:00', text: 'Добрый вечер. При установке пакета для лабораторных работ появляется ошибка 1603. Windows 11, свободного места достаточно, запускал установщик от имени администратора. Нужна программа к занятию завтра утром.' }
+  ,{ id: 'call-097', type: 'Расшифровка разговора', sender: 'Ольга Тимофеева', address: 'Входящий звонок · 2:51', subject: 'Не печатает сетевой принтер', date: '2026-09-11T16:10:00', text: 'Пользователь: Принтер в деканате отображается как недоступный у трёх сотрудников. На самом принтере ошибок нет. Оператор: Перезапускали устройство? Пользователь: Да, перезапустили, но очередь печати не двигается.' }
+  ,{ id: 'mail-096', type: 'Письмо', sender: 'Никита Лебедев', address: 'n.lebedev@example.ru', subject: 'Пропали материалы курса', date: '2026-09-11T14:38:00', text: 'Здравствуйте. После обновления страницы курса исчез раздел с лекциями за сентябрь. Одногруппники видят материалы, а у меня отображаются только задания. Пробовал выйти и войти заново.' }
+  ,{ id: 'mail-095', type: 'Письмо', sender: 'Виктория Зорина', address: 'v.zorina@example.ru', subject: 'Неверно отображается фамилия в профиле', date: '2026-09-11T13:02:00', text: 'Добрый день! После смены фамилии в личном кабинете остались старые данные, хотя в отдел кадров документы переданы. Подскажите, как обновить профиль и данные в электронной ведомости.' }
+];
+
+const seedSolutions = [
+  { ticketId: 'demo-password-reset', description: 'Не приходит письмо для восстановления пароля от личного кабинета.', summary: 'Письмо восстановления пароля не доставлено.', category: 'Учётная запись', priority: 'Высокий', missing: 'Корпоративная почта пользователя.', nextAction: 'Проверена доставка и запущена повторная отправка.', draft: 'Здравствуйте! Письмо для восстановления отправлено повторно. Проверьте входящие и папку «Спам».', source: 'Почта', confidence: 98, resolvedAt: '2026-09-12T07:55:00.000Z' },
+  { ticketId: 'demo-course-submit', description: 'В учебном курсе отсутствовала кнопка отправки домашнего задания.', summary: 'Восстановлена отправка домашнего задания.', category: 'Образовательная платформа', priority: 'Высокий', missing: 'Ссылка на курс и номер задания.', nextAction: 'Исправлены сроки публикации задания.', draft: 'Здравствуйте! Доступ к отправке восстановлен. Обновите страницу курса и загрузите файл повторно.', source: 'Почта', confidence: 94, resolvedAt: '2026-09-10T11:30:00.000Z' },
+  { ticketId: 'demo-wifi-auth', description: 'Ноутбук не подключался к корпоративной сети из-за сохранённого старого пароля.', summary: 'Исправлена ошибка авторизации Wi-Fi.', category: 'Сеть и подключения', priority: 'Обычный', missing: 'Модель устройства и название сети.', nextAction: 'Удалён старый профиль сети и выполнено повторное подключение.', draft: 'Здравствуйте! Удалите сохранённую сеть, подключитесь заново и введите актуальный пароль учётной записи.', source: 'Телефон', confidence: 96, resolvedAt: '2026-09-09T15:20:00.000Z' },
+  { ticketId: 'demo-projector-hdmi', description: 'Проектор показывал синий экран при подключении ноутбука по HDMI.', summary: 'Восстановлен сигнал проектора по HDMI.', category: 'Оборудование', priority: 'Высокий', missing: 'Номер аудитории.', nextAction: 'Заменён неисправный HDMI-кабель и выбран верный источник сигнала.', draft: 'Здравствуйте! Кабель заменён, изображение восстановлено. Проектор готов к работе.', source: 'Телефон', confidence: 97, resolvedAt: '2026-09-08T09:12:00.000Z' },
+  { ticketId: 'demo-vpn-certificate', description: 'После обновления Windows VPN сообщал об ошибке проверки сертификата.', summary: 'Обновлён сертификат рабочего VPN.', category: 'Сеть и подключения', priority: 'Высокий', missing: 'Версия Windows.', nextAction: 'Переустановлен пользовательский сертификат VPN.', draft: 'Здравствуйте! Сертификат обновлён. Перезапустите VPN-клиент и подключитесь повторно.', source: 'Телефон', confidence: 95, resolvedAt: '2026-09-07T13:44:00.000Z' },
+  { ticketId: 'demo-printer-queue', description: 'Сетевой принтер был недоступен нескольким сотрудникам, очередь печати не выполнялась.', summary: 'Перезапущена очередь сетевого принтера.', category: 'Оборудование', priority: 'Обычный', missing: 'Инвентарный номер принтера.', nextAction: 'Очищена зависшая очередь и перезапущена служба печати.', draft: 'Здравствуйте! Очередь печати восстановлена. Отправьте документ на принтер повторно.', source: 'Телефон', confidence: 93, resolvedAt: '2026-09-06T12:18:00.000Z' },
+  { ticketId: 'demo-software-1603', description: 'Учебная программа не устанавливалась в Windows 11 с ошибкой 1603.', summary: 'Устранена ошибка 1603 при установке.', category: 'Программное обеспечение', priority: 'Обычный', missing: 'Версия установочного пакета.', nextAction: 'Удалены остаточные файлы предыдущей версии и повторно запущен установщик.', draft: 'Здравствуйте! Предыдущая версия удалена. Перезагрузите компьютер и запустите новый установщик от имени администратора.', source: 'Почта', confidence: 92, resolvedAt: '2026-09-05T16:36:00.000Z' },
+  { ticketId: 'demo-profile-name', description: 'В личном кабинете после смены фамилии отображались старые данные.', summary: 'Обновлены персональные данные профиля.', category: 'Учётная запись', priority: 'Низкий', missing: 'Подтверждение изменения данных отделом кадров.', nextAction: 'Запущена синхронизация профиля с кадровой системой.', draft: 'Здравствуйте! Данные синхронизированы. Выйдите из кабинета и войдите снова, чтобы увидеть обновлённую фамилию.', source: 'Почта', confidence: 91, resolvedAt: '2026-09-04T10:05:00.000Z' }
 ];
 
 const clone = (items) => items.map((item) => ({ ...item }));
@@ -36,8 +52,13 @@ const loadStoredArray = (keys, fallback) => {
   return clone(fallback);
 };
 
-let tickets = loadStoredArray([STORAGE_KEY, ...PREVIOUS_STORAGE_KEYS], seedTickets);
+const loadedTickets = loadStoredArray([STORAGE_KEY, ...PREVIOUS_STORAGE_KEYS], seedTickets);
+let pendingSolutions = loadStoredArray([PENDING_SOLUTIONS_KEY], []);
+pendingSolutions = [...pendingSolutions, ...loadedTickets.filter((ticket) => ticket.status === 'Решена')]
+  .filter((ticket, index, items) => items.findIndex((candidate) => (candidate.solutionId || candidate.id) === (ticket.solutionId || ticket.id)) === index);
+let tickets = loadedTickets.filter((ticket) => ticket.status !== 'Решена');
 let mailItems = loadStoredArray([MAIL_STORAGE_KEY], seedMail);
+mailItems = [...mailItems, ...seedMail.filter((seed) => !mailItems.some((item) => item.id === seed.id))];
 let currentSource = 'Почта';
 let currentAnalysis = null;
 let editingTicketId = null;
@@ -62,6 +83,7 @@ const example = 'Здравствуйте! После смены телефон�
 
 const persistTickets = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets)); } catch {} };
 const persistMail = () => { try { localStorage.setItem(MAIL_STORAGE_KEY, JSON.stringify(mailItems)); } catch {} };
+const persistPendingSolutions = () => { try { localStorage.setItem(PENDING_SOLUTIONS_KEY, JSON.stringify(pendingSolutions)); } catch {} };
 const statusClass = (status) => ({ 'В работе': 'in-work', 'Решена': 'done', 'Новая': 'new', [ESCALATED_STATUS]: 'escalated' }[status] || 'new');
 const priorityClass = (priority) => priority === 'Высокий' ? 'priority-high' : priority === 'Низкий' ? 'priority-low' : '';
 const ticketNumber = (id) => `#${String(id).padStart(3, '0')}`;
@@ -71,7 +93,7 @@ const editIcon = () => '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 
 const typeIcon = (type) => type === 'Письмо' ? '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>' : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3h3l1.5 5-2 1.5a15 15 0 0 0 5.5 5.5l1.5-2 5 1.5v3A3.5 3.5 0 0 1 17.5 21C9.5 20.5 3.5 14.5 3 6.5A3.5 3.5 0 0 1 6.5 3Z"/></svg>';
 const showToast = (message) => { toast.textContent = message; toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800); };
 const solutionPayload = (ticket) => {
-  if (!ticket.solutionId) ticket.solutionId = crypto.randomUUID();
+  if (!ticket.solutionId) ticket.solutionId = crypto.randomUUID?.() || `solution-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   return { ticketId: ticket.solutionId, description: ticket.description, summary: ticket.summary, category: ticket.category, priority: ticket.priority, missing: ticket.missing, nextAction: ticket.nextAction, draft: ticket.draft, source: ticket.source, confidence: ticket.confidence, resolvedAt: ticket.resolvedAt || ticket.date || new Date().toISOString() };
 };
 const apiJson = async (url, options = {}) => {
@@ -82,19 +104,19 @@ const apiJson = async (url, options = {}) => {
 };
 const storeSolution = async (ticket) => apiJson('/api/solutions', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(solutionPayload(ticket)) });
 const syncResolvedTickets = async () => {
-  const solved = tickets.filter((ticket) => ticket.status === 'Решена');
-  if (!solved.length) return;
-  persistTickets();
+  const items = [...seedSolutions, ...pendingSolutions.map(solutionPayload)];
+  if (!items.length) return;
+  persistPendingSolutions();
   try {
-    await apiJson('/api/solutions/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: solved.map(solutionPayload) }) });
-    persistTickets();
+    await apiJson('/api/solutions/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items }) });
+    pendingSolutions = []; persistPendingSolutions();
   } catch { /* база может быть ещё не подключена в локальном предпросмотре */ }
 };
 
 const themeButton = $('#themeButton');
 const themeMenu = $('#themeMenu');
 const themeOptions = $$('[data-theme-option]');
-const currentTheme = () => THEMES[document.documentElement.dataset.theme] ? document.documentElement.dataset.theme : 'graphite';
+const currentTheme = () => THEMES[document.documentElement.dataset.theme] ? document.documentElement.dataset.theme : 'sber';
 const closeThemeMenu = () => { themeMenu.hidden = true; themeButton.setAttribute('aria-expanded', 'false'); };
 const syncThemeUi = () => {
   const selected = currentTheme();
@@ -354,7 +376,9 @@ $('#resolveTicketButton').addEventListener('click', async (event) => {
   const ticket = tickets.find((item) => item.id === viewingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS || ticket.status === 'Решена') return;
   const button = event.currentTarget; button.disabled = true; button.textContent = 'Сохраняем решение…'; ticket.resolvedAt = new Date().toISOString();
   try {
-    await storeSolution(ticket); ticket.status = 'Решена'; persistTickets(); renderAll(); syncDetail(ticket); loadSolutions(); showToast(`Заявка ${ticketNumber(ticket.id)} решена и добавлена в базу`);
+    await storeSolution(ticket);
+    tickets = tickets.filter((item) => item.id !== ticket.id); persistTickets(); closeDetail(); renderAll(); loadSolutions();
+    showToast(`Заявка ${ticketNumber(ticket.id)} решена и перенесена в базу`);
   } catch (error) {
     delete ticket.resolvedAt; button.disabled = false; showToast(error instanceof Error ? error.message : 'Не удалось сохранить решение');
   } finally { button.textContent = 'Отметить решённой'; }
@@ -383,4 +407,4 @@ const registerWebMcpTools = () => {
   register({ name: 'create_local_support_ticket', title: 'Создать локальную заявку', description: 'Создаёт заявку из текущего результата анализа.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute() { const id = createLocalTicket(); return { id: ticketNumber(id), status: 'Новая', storage: 'local-demo' }; } });
 };
 
-syncThemeUi(); renderAll(); syncResolvedTickets().then(loadSolutions); showView(location.hash.slice(1), false); registerWebMcpTools();
+persistTickets(); persistMail(); persistPendingSolutions(); syncThemeUi(); renderAll(); syncResolvedTickets().then(loadSolutions); showView(location.hash.slice(1), false); registerWebMcpTools();

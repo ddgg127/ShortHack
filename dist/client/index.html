@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" data-theme="graphite">
+<html lang="ru" data-theme="sber">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script>
     try {
-      const savedTheme = localStorage.getItem('line-theme') || localStorage.getItem('pulse-theme');
+      const savedTheme = localStorage.getItem('line-theme-v2') || 'sber';
       if (['light', 'dark', 'graphite', 'sber', 'polar', 'ember'].includes(savedTheme)) document.documentElement.dataset.theme = savedTheme;
     } catch {}
   </script>
@@ -263,7 +263,7 @@
           <div>
             <p class="eyebrow">Единый реестр</p>
             <h2>Все обращения <span id="totalRequests">0</span></h2>
-            <p>Подробные карточки с результатами разбора и следующими действиями.</p>
+            <p>Только активные обращения. Решённые автоматически переносятся в базу решений.</p>
           </div>
           <button class="primary-button compact" id="newRequestButton" type="button">
             <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
@@ -286,7 +286,7 @@
           </label>
           <label class="select-field">Статус
             <select id="statusFilter">
-              <option value="all">Любой</option><option>Новая</option><option>В работе</option><option>Решена</option><option>Передана старшему</option>
+              <option value="all">Любой</option><option>Новая</option><option>В работе</option><option>Передана старшему</option>
             </select>
           </label>
           <label class="select-field sort-field">Порядок
