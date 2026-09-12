@@ -20,11 +20,11 @@
       </a>
 
       <nav class="main-nav">
-        <a class="nav-item active" href="#workspace">
+        <a class="nav-item active" href="#workspace" data-view-link="workspace">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 4h16v12H7l-3 3V4Z"/><path d="M8 9h8M8 12h5"/></svg>
           Новое обращение
         </a>
-        <a class="nav-item" href="#requests">
+        <a class="nav-item" href="#requests" data-view-link="requests">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg>
           Заявки
           <span class="nav-count" id="navCount">3</span>
@@ -51,8 +51,8 @@
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </button>
         <div>
-          <p class="eyebrow">Рабочее пространство</p>
-          <h1>Разбор обращения</h1>
+          <p class="eyebrow" id="pageEyebrow">Рабочее пространство</p>
+          <h1 id="pageTitle">Разбор обращения</h1>
         </div>
         <div class="top-actions">
           <span class="live-pill"><i></i> Всё готово</span>
@@ -62,7 +62,7 @@
         </div>
       </header>
 
-      <section class="workspace" id="workspace">
+      <section class="workspace app-view" id="workspace" data-view="workspace">
         <div class="input-panel panel">
           <div class="panel-heading">
             <div>
@@ -174,34 +174,112 @@
         </div>
       </section>
 
-      <section class="requests-section" id="requests">
+      <section class="requests-section app-view" data-view="workspace">
         <div class="section-heading">
           <div><p class="eyebrow">Сегодня</p><h2>Последние заявки</h2></div>
-          <button class="text-button" type="button">Смотреть все <span aria-hidden="true">→</span></button>
+          <button class="text-button" id="viewAllButton" type="button">Смотреть все <span aria-hidden="true">→</span></button>
         </div>
-        <div class="request-list" id="requestList">
-          <article class="request-row">
-            <span class="request-id">#024</span>
-            <div><strong>Не загружается ведомость группы</strong><span>Образовательная платформа</span></div>
-            <span class="status-pill in-work">В работе</span><span class="request-time">12 мин назад</span>
-          </article>
-          <article class="request-row">
-            <span class="request-id">#023</span>
-            <div><strong>Нет доступа к корпоративному Wi-Fi</strong><span>Сеть и подключения</span></div>
-            <span class="status-pill new">Новая</span><span class="request-time">34 мин назад</span>
-          </article>
-          <article class="request-row">
-            <span class="request-id">#022</span>
-            <div><strong>Сброс пароля от личного кабинета</strong><span>Учётная запись</span></div>
-            <span class="status-pill done">Решена</span><span class="request-time">1 ч назад</span>
-          </article>
-        </div>
+        <div class="request-list" id="requestList"></div>
       </section>
 
-      <section class="knowledge-placeholder" id="knowledge">
+      <section class="knowledge-placeholder app-view" id="knowledge" data-view="workspace">
         <p>База знаний появится на следующем этапе проекта.</p>
       </section>
+
+      <section class="requests-page app-view" id="requests" data-view="requests" hidden>
+        <div class="requests-page-heading">
+          <div>
+            <p class="eyebrow">Единый реестр</p>
+            <h2>Все обращения <span id="totalRequests">0</span></h2>
+            <p>Подробные карточки с результатами разбора и следующими действиями.</p>
+          </div>
+          <button class="primary-button compact" id="newRequestButton" type="button">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Новое обращение
+          </button>
+        </div>
+
+        <div class="filter-bar">
+          <label class="search-field" for="requestSearch">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/></svg>
+            <input id="requestSearch" type="search" placeholder="Поиск по описанию, краткому тексту и черновику">
+          </label>
+          <label class="select-field">Категория
+            <select id="categoryFilter"><option value="all">Все категории</option></select>
+          </label>
+          <label class="select-field">Приоритет
+            <select id="priorityFilter">
+              <option value="all">Любой</option><option>Высокий</option><option>Обычный</option><option>Низкий</option>
+            </select>
+          </label>
+          <label class="select-field">Статус
+            <select id="statusFilter">
+              <option value="all">Любой</option><option>Новая</option><option>В работе</option><option>Решена</option>
+            </select>
+          </label>
+          <label class="select-field sort-field">Порядок
+            <select id="sortSelect">
+              <option value="date-desc">Сначала новые</option>
+              <option value="date-asc">Сначала старые</option>
+              <option value="alpha">По алфавиту</option>
+              <option value="category">По категории</option>
+              <option value="priority">По приоритету</option>
+              <option value="confidence">По уверенности</option>
+            </select>
+          </label>
+          <button class="reset-button" id="resetFilters" type="button">Сбросить</button>
+        </div>
+
+        <div class="result-summary"><span id="visibleCount">0 заявок</span><span id="activeFilterLabel">Без фильтров</span></div>
+        <div class="ticket-grid" id="ticketGrid"></div>
+        <div class="no-results" id="noResults" hidden>
+          <h3>Заявки не найдены</h3>
+          <p>Измените поисковый запрос или сбросьте фильтры.</p>
+        </div>
+      </section>
     </main>
+  </div>
+
+  <div class="modal-backdrop" id="editModal" hidden>
+    <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <header class="modal-header">
+        <div><p class="eyebrow">Редактирование</p><h2 id="modalTitle">Заявка <span id="modalTicketId"></span></h2></div>
+        <button class="icon-button" id="closeModal" type="button" aria-label="Закрыть редактор">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form id="editForm">
+        <div class="form-grid">
+          <label class="form-field full">Текст обращения
+            <textarea id="editDescription" maxlength="2000" required></textarea>
+          </label>
+          <label class="form-field full">Краткое описание
+            <textarea id="editSummary" maxlength="400" required></textarea>
+          </label>
+          <label class="form-field">Категория
+            <select id="editCategory" required>
+              <option>Учётная запись</option><option>Сеть и подключения</option><option>Образовательная платформа</option><option>Оборудование</option><option>Другое</option>
+            </select>
+          </label>
+          <label class="form-field">Приоритет
+            <select id="editPriority" required><option>Высокий</option><option>Обычный</option><option>Низкий</option></select>
+          </label>
+          <label class="form-field full">Что нужно уточнить
+            <textarea id="editMissing" maxlength="500"></textarea>
+          </label>
+          <label class="form-field full">Следующий шаг
+            <textarea id="editNextAction" maxlength="500" required></textarea>
+          </label>
+          <label class="form-field full">Черновик ответа
+            <textarea id="editDraftText" maxlength="1200"></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelEdit" type="button">Отмена</button>
+          <button class="primary-button compact" type="submit">Сохранить изменения</button>
+        </div>
+      </form>
+    </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
