@@ -1,6 +1,11 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const STORAGE_KEY = 'pulse-demo-tickets-v2';
+const THEME_STORAGE_KEY = 'pulse-theme';
+const THEMES = {
+  light: 'Светлая', dark: 'Тёмная', graphite: 'Серо-чёрная',
+  sber: 'Сбер', polar: 'Полярная ночь', ember: 'Тёплый графит'
+};
 
 const seedTickets = [
   {
@@ -112,6 +117,44 @@ const showToast = (message) => {
   window.clearTimeout(showToast.timer);
   showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 2600);
 };
+
+const themeButton = $('#themeButton');
+const themeMenu = $('#themeMenu');
+const themeOptions = $$('[data-theme-option]');
+const currentTheme = () => THEMES[document.documentElement.dataset.theme] ? document.documentElement.dataset.theme : 'graphite';
+const closeThemeMenu = () => {
+  themeMenu.hidden = true;
+  themeButton.setAttribute('aria-expanded', 'false');
+};
+const syncThemeUi = () => {
+  const selected = currentTheme();
+  $('#themeButtonLabel').textContent = THEMES[selected];
+  themeButton.setAttribute('aria-label', `Изменить тему. Сейчас: ${THEMES[selected]}`);
+  themeOptions.forEach((option) => {
+    const active = option.dataset.themeOption === selected;
+    option.classList.toggle('active', active);
+    option.setAttribute('aria-checked', String(active));
+  });
+};
+const setTheme = (theme) => {
+  if (!THEMES[theme]) return;
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch { /* тема работает и без хранилища */ }
+  syncThemeUi();
+  closeThemeMenu();
+  showToast(`Тема: ${THEMES[theme]}`);
+};
+
+themeButton.addEventListener('click', () => {
+  const opening = themeMenu.hidden;
+  themeMenu.hidden = !opening;
+  themeButton.setAttribute('aria-expanded', String(opening));
+  if (opening) themeOptions.find((option) => option.classList.contains('active'))?.focus();
+});
+themeOptions.forEach((option) => option.addEventListener('click', () => setTheme(option.dataset.themeOption)));
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.theme-control')) closeThemeMenu();
+});
 
 const requestAnalysis = async (text, source = currentSource) => {
   const response = await fetch('/api/analyze', {
@@ -367,7 +410,11 @@ $('#editForm').addEventListener('submit', (event) => {
 $('#closeModal').addEventListener('click', closeEditor);
 $('#cancelEdit').addEventListener('click', closeEditor);
 modal.addEventListener('click', (event) => { if (event.target === modal) closeEditor(); });
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !modal.hidden) closeEditor(); });
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  if (!themeMenu.hidden) { closeThemeMenu(); themeButton.focus(); }
+  if (!modal.hidden) closeEditor();
+});
 window.addEventListener('hashchange', () => showView(location.hash === '#requests' ? 'requests' : 'workspace', false));
 
 const registerWebMcpTools = () => {
@@ -398,6 +445,7 @@ const registerWebMcpTools = () => {
   });
 };
 
+syncThemeUi();
 renderAll();
 showView(location.hash === '#requests' ? 'requests' : 'workspace', false);
 registerWebMcpTools();
