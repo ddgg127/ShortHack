@@ -8,6 +8,8 @@
     "deploy": "wrangler deploy"
   },
   "devDependencies": {
+    "drizzle-kit": "^0.31.10",
+    "drizzle-orm": "^0.45.2",
     "wrangler": "^4.131.1"
   }
 }

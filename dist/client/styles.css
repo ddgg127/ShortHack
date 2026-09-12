@@ -360,13 +360,14 @@ textarea::placeholder { color: var(--muted-2); }
 
 .mail-page { padding: 38px clamp(28px, 4vw, 64px) 70px; }
 .mail-page-heading { align-items: center; }
+.mail-heading-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
 .mail-legend { display: flex; gap: 15px; padding: 10px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--muted); font-size: .75rem; }
 .mail-legend span { display: inline-flex; align-items: center; gap: 7px; }
 .mail-dot, .call-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); }
 .call-dot { background: var(--accent); }
 .mail-list { display: grid; gap: 14px; }
-.mail-item { overflow: hidden; border: 1px solid var(--line-soft); border-radius: 18px; background: var(--panel); transition: border-color .2s; }
-.mail-item:hover { border-color: var(--line); }
+.mail-item { overflow: hidden; border: 1px solid var(--line-soft); border-radius: 18px; background: var(--panel); cursor: pointer; transition: border-color .2s, transform .2s; }
+.mail-item:hover { border-color: var(--accent); transform: translateY(-1px); }
 .mail-item-main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: start; padding: 20px 22px; }
 .mail-type-icon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; color: var(--blue); background: rgba(109,169,255,.1); }
 .mail-type-icon.call { color: var(--accent); background: var(--accent-soft); }
@@ -382,6 +383,18 @@ textarea::placeholder { color: var(--muted-2); }
 .mail-analysis-cell span { display: block; margin-bottom: 4px; color: var(--muted-2); font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
 .mail-analysis-cell p { margin: 0; color: var(--surface-text); font-size: .78rem; line-height: 1.5; white-space: pre-line; }
 .mail-analysis-ticket { color: var(--accent) !important; font-weight: 800; }
+
+.knowledge-page { padding: 38px clamp(28px, 4vw, 64px) 70px; }
+.solution-state { padding: 42px 20px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); text-align: center; }
+.solution-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.solution-card { display: grid; gap: 13px; padding: 20px 22px; border: 1px solid var(--line-soft); border-radius: 18px; background: var(--panel); cursor: pointer; transition: border-color .2s, transform .2s; }
+.solution-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.solution-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.solution-card h3 { margin: 0; color: var(--surface-text); font-size: 1rem; line-height: 1.4; }
+.solution-card > p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--surface-text-soft); font-size: .8rem; line-height: 1.6; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.solution-draft { padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.solution-draft span { display: block; margin-bottom: 5px; color: var(--surface-text); font-size: .69rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+.solution-draft p { display: -webkit-box; margin: 0; overflow: hidden; color: var(--surface-text-soft); font-size: .78rem; line-height: 1.55; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 
 .request-row { cursor: pointer; transition: background .2s; }
 .request-row:hover { background: rgba(255,255,255,.025); }
@@ -439,6 +452,7 @@ body.modal-open { overflow: hidden; }
   .request-time, .request-row .status-pill { display: none; }
   .requests-page { padding: 24px 18px 50px; }
   .mail-page { padding: 24px 18px 50px; }
+  .knowledge-page { padding: 24px 18px 50px; }
   .requests-page-heading { align-items: start; flex-direction: column; }
   .filter-bar { grid-template-columns: 1fr 1fr; }
   .search-field, .sort-field { grid-column: 1 / -1; }
@@ -452,6 +466,7 @@ body.modal-open { overflow: hidden; }
   .mail-item-main { grid-template-columns: auto 1fr; padding: 18px; }
   .mail-analyze-button { grid-column: 1 / -1; width: 100%; }
   .mail-analysis { grid-template-columns: 1fr 1fr; padding: 16px 18px 18px; }
+  .solution-list { grid-template-columns: 1fr; }
   .detail-status-line, .detail-view-grid, .detail-actions { padding-left: 18px; padding-right: 18px; }
   .knowledge-placeholder { margin: 0 18px 40px; }
 }

@@ -42,6 +42,9 @@ let currentSource = 'Почта';
 let currentAnalysis = null;
 let editingTicketId = null;
 let viewingTicketId = null;
+let viewingMailId = null;
+let viewingSolution = null;
+let solutions = [];
 let lastFocusedElement = null;
 
 const requestText = $('#requestText');
@@ -53,6 +56,8 @@ const sourceOptions = $$('.source-option');
 const toast = $('#toast');
 const editModal = $('#editModal');
 const detailModal = $('#detailModal');
+const mailDetailModal = $('#mailDetailModal');
+const solutionDetailModal = $('#solutionDetailModal');
 const example = 'Здравствуйте! После смены телефона не получается войти в личный кабинет. Код подтверждения приходит на старый номер, доступа к нему уже нет. Мне срочно нужна ведомость для деканата сегодня. Что делать?';
 
 const persistTickets = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tickets)); } catch {} };
@@ -65,6 +70,26 @@ const makeElement = (tag, className, text) => { const node = document.createElem
 const editIcon = () => '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 16-.8 4.8L8 20l11-11-4-4L4 16Z"/><path d="m13.5 6.5 4 4"/></svg>';
 const typeIcon = (type) => type === 'Письмо' ? '<svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>' : '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3h3l1.5 5-2 1.5a15 15 0 0 0 5.5 5.5l1.5-2 5 1.5v3A3.5 3.5 0 0 1 17.5 21C9.5 20.5 3.5 14.5 3 6.5A3.5 3.5 0 0 1 6.5 3Z"/></svg>';
 const showToast = (message) => { toast.textContent = message; toast.classList.add('show'); clearTimeout(showToast.timer); showToast.timer = setTimeout(() => toast.classList.remove('show'), 2800); };
+const solutionPayload = (ticket) => {
+  if (!ticket.solutionId) ticket.solutionId = crypto.randomUUID();
+  return { ticketId: ticket.solutionId, description: ticket.description, summary: ticket.summary, category: ticket.category, priority: ticket.priority, missing: ticket.missing, nextAction: ticket.nextAction, draft: ticket.draft, source: ticket.source, confidence: ticket.confidence, resolvedAt: ticket.resolvedAt || ticket.date || new Date().toISOString() };
+};
+const apiJson = async (url, options = {}) => {
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Сервер временно недоступен.');
+  return data;
+};
+const storeSolution = async (ticket) => apiJson('/api/solutions', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(solutionPayload(ticket)) });
+const syncResolvedTickets = async () => {
+  const solved = tickets.filter((ticket) => ticket.status === 'Решена');
+  if (!solved.length) return;
+  persistTickets();
+  try {
+    await apiJson('/api/solutions/sync', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: solved.map(solutionPayload) }) });
+    persistTickets();
+  } catch { /* база может быть ещё не подключена в локальном предпросмотре */ }
+};
 
 const themeButton = $('#themeButton');
 const themeMenu = $('#themeMenu');
@@ -149,9 +174,10 @@ const renderMail = () => {
   const list = $('#mailList'); list.replaceChildren();
   [...mailItems].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach((item) => {
     const article = makeElement('article', 'mail-item'), main = makeElement('div', 'mail-item-main'), icon = makeElement('span', `mail-type-icon${item.type === 'Письмо' ? '' : ' call'}`); icon.innerHTML = typeIcon(item.type);
+    article.dataset.openMail = item.id; article.tabIndex = 0; article.setAttribute('role', 'button'); article.setAttribute('aria-label', `Открыть ${item.type.toLowerCase()}: ${item.subject}`);
     const copy = makeElement('div', 'mail-copy'), meta = makeElement('div', 'mail-meta'); meta.append(makeElement('span', '', item.type), makeElement('span', '', item.sender), makeElement('span', '', item.address), makeElement('span', '', formatDate(item.date)));
     copy.append(meta, makeElement('h3', '', item.subject), makeElement('p', '', item.text));
-    const action = makeElement('button', 'mail-analyze-button', item.analysis ? `Открыть заявку ${ticketNumber(item.ticketId)}` : 'Отправить на анализ'); action.type = 'button'; action.dataset.mailId = item.id;
+    const action = makeElement('button', 'mail-analyze-button', item.analysis ? `Открыть заявку ${ticketNumber(item.ticketId)}` : 'Отправить на анализ'); action.type = 'button'; action.dataset.analyzeMail = item.id;
     main.append(icon, copy, action); article.append(main);
     if (item.analysis) {
       const result = makeElement('div', 'mail-analysis');
@@ -161,6 +187,31 @@ const renderMail = () => {
     list.append(article);
   });
   $('#mailCount').textContent = mailItems.filter((item) => !item.analysis).length; $('#totalMail').textContent = mailItems.length;
+  $('#analyzeAllMailButton').disabled = mailItems.every((item) => item.analysis);
+};
+
+const renderSolutions = () => {
+  const list = $('#solutionList'); list.replaceChildren();
+  $('#knowledgeCount').textContent = solutions.length; $('#totalSolutions').textContent = solutions.length;
+  $('#solutionState').hidden = solutions.length > 0;
+  if (!solutions.length && !$('#solutionState').textContent) $('#solutionState').textContent = 'В базе пока нет решённых обращений.';
+  solutions.forEach((item) => {
+    const card = makeElement('article', 'solution-card'); card.tabIndex = 0; card.setAttribute('role', 'button'); card.dataset.solutionId = item.ticketId;
+    const header = makeElement('div', 'solution-card-header'); header.append(makeElement('span', 'status-pill done', 'Решена'), makeElement('span', 'ticket-date', formatDate(item.resolvedAt)));
+    card.append(header, makeElement('h3', '', item.summary), makeElement('p', '', item.description));
+    const meta = makeElement('div', 'ticket-meta'); meta.append(makeElement('span', 'meta-chip', item.category), makeElement('span', 'meta-chip', `Приоритет: ${item.priority}`)); card.append(meta);
+    const draft = makeElement('div', 'solution-draft'); draft.append(makeElement('span', '', 'Черновик ответа'), makeElement('p', '', item.draft)); card.append(draft);
+    list.append(card);
+  });
+};
+
+const loadSolutions = async () => {
+  const state = $('#solutionState'); state.hidden = false; state.textContent = 'Загружаем решения…';
+  try {
+    const data = await apiJson('/api/solutions'); solutions = Array.isArray(data.items) ? data.items : []; state.textContent = solutions.length ? '' : 'В базе пока нет решённых обращений.'; renderSolutions();
+  } catch (error) {
+    solutions = []; renderSolutions(); state.hidden = false; state.textContent = error instanceof Error ? error.message : 'Не удалось загрузить базу решений.';
+  }
 };
 
 const populateCategoryFilter = () => {
@@ -169,12 +220,12 @@ const populateCategoryFilter = () => {
 };
 const renderAll = () => { populateCategoryFilter(); renderRecent(); renderTicketGrid(); renderMail(); };
 
-const pageMeta = { workspace: ['Рабочее пространство', 'Разбор обращения', 'Линия — помощник поддержки'], requests: ['Работа с обращениями', 'Заявки', 'Заявки — Линия'], mail: ['Входящий поток', 'Почта', 'Почта — Линия'] };
+const pageMeta = { workspace: ['Рабочее пространство', 'Разбор обращения', 'Линия — помощник поддержки'], requests: ['Работа с обращениями', 'Заявки', 'Заявки — Линия'], mail: ['Входящий поток', 'Почта', 'Почта — Линия'], knowledge: ['Опыт поддержки', 'База решений', 'База решений — Линия'] };
 const showView = (view, updateHash = true) => {
   const safeView = pageMeta[view] ? view : 'workspace';
   $$('[data-view]').forEach((section) => { section.hidden = section.dataset.view !== safeView; }); $$('[data-view-link]').forEach((link) => link.classList.toggle('active', link.dataset.viewLink === safeView));
   $('#pageEyebrow').textContent = pageMeta[safeView][0]; $('#pageTitle').textContent = pageMeta[safeView][1]; document.title = pageMeta[safeView][2];
-  if (safeView === 'requests') renderTicketGrid(); if (safeView === 'mail') renderMail(); if (updateHash) history.replaceState(null, '', `#${safeView}`);
+  if (safeView === 'requests') renderTicketGrid(); if (safeView === 'mail') renderMail(); if (safeView === 'knowledge') loadSolutions(); if (updateHash) history.replaceState(null, '', `#${safeView}`);
   $('.sidebar').classList.remove('open'); window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -184,7 +235,7 @@ const syncDetail = (ticket) => {
   $('#detailCreated').textContent = `${ticket.source} · создана ${formatDate(ticket.date)} · уверенность ${ticket.confidence}%`;
   $('#detailDescription').textContent = ticket.description; $('#detailSummary').textContent = ticket.summary; $('#detailCategory').textContent = ticket.category; $('#detailPriority').textContent = ticket.priority;
   $('#detailMissing').textContent = ticket.missing || 'Дополнительные сведения не требуются.'; $('#detailNextAction').textContent = ticket.nextAction; $('#detailDraft').textContent = ticket.draft || 'Черновик пока не подготовлен.';
-  $('#detailLockedNote').hidden = !locked; $('#detailEditButton').disabled = locked; $('#escalateTicketButton').disabled = locked; $('#resolveTicketButton').disabled = locked || ticket.status === 'Решена';
+  $('#detailLockedNote').hidden = !locked; $('#detailEditButton').disabled = locked; $('#escalateTicketButton').disabled = locked || ticket.status === 'Решена'; $('#resolveTicketButton').disabled = locked || ticket.status === 'Решена';
 };
 const openDetail = (id) => {
   const ticket = tickets.find((item) => item.id === Number(id)); if (!ticket) return;
@@ -201,6 +252,43 @@ const openEditor = (id) => {
   editModal.hidden = false; document.body.classList.add('modal-open'); $('#editDescription').focus();
 };
 const closeEditor = () => { editModal.hidden = true; document.body.classList.remove('modal-open'); editingTicketId = null; lastFocusedElement?.focus(); };
+
+const syncMailDetail = (item) => {
+  $('#mailDetailType').textContent = item.type; $('#mailDetailTitle').textContent = item.subject;
+  $('#mailDetailMeta').textContent = `${item.sender} · ${item.address} · ${formatDate(item.date)}`; $('#mailDetailText').textContent = item.text;
+  const analysisBlock = $('#mailDetailAnalysis');
+  analysisBlock.hidden = !item.analysis;
+  $('#mailDetailAnalysisText').textContent = item.analysis ? `${item.analysis.summary}\n${item.analysis.category} · приоритет: ${item.analysis.priority}\nСоздана заявка ${ticketNumber(item.ticketId)}` : '';
+  $('#mailDetailAnalyzeButton').textContent = item.analysis ? `Открыть заявку ${ticketNumber(item.ticketId)}` : 'Отправить на анализ';
+};
+const openMailDetail = (id) => {
+  const item = mailItems.find((entry) => entry.id === id); if (!item) return;
+  viewingMailId = id; lastFocusedElement = document.activeElement; syncMailDetail(item); mailDetailModal.hidden = false; document.body.classList.add('modal-open'); $('#closeMailDetail').focus();
+};
+const closeMailDetail = () => { mailDetailModal.hidden = true; document.body.classList.remove('modal-open'); viewingMailId = null; lastFocusedElement?.focus(); };
+const openSolutionDetail = (id) => {
+  const item = solutions.find((entry) => entry.ticketId === id); if (!item) return;
+  viewingSolution = item; lastFocusedElement = document.activeElement; $('#solutionDetailTitle').textContent = item.summary; $('#solutionDetailMeta').textContent = `${item.category} · ${item.source} · решена ${formatDate(item.resolvedAt)}`;
+  $('#solutionDetailDescription').textContent = item.description; $('#solutionDetailSummary').textContent = item.summary; $('#solutionDetailDraft').textContent = item.draft;
+  solutionDetailModal.hidden = false; document.body.classList.add('modal-open'); $('#closeSolutionDetail').focus();
+};
+const closeSolutionDetail = () => { solutionDetailModal.hidden = true; document.body.classList.remove('modal-open'); viewingSolution = null; lastFocusedElement?.focus(); };
+
+const analyzeMailItem = async (item, button) => {
+  if (item.analysis && item.ticketId) { openDetail(item.ticketId); return item.ticketId; }
+  if (button) { button.disabled = true; button.textContent = 'Анализируем…'; }
+  try {
+    const source = item.type === 'Письмо' ? 'Почта' : 'Телефон';
+    const analysis = await requestAnalysis(item.text, source);
+    item.analysis = analysis; item.ticketId = createLocalTicket(analysis, source, item.text); persistMail(); renderAll();
+    if (!mailDetailModal.hidden && viewingMailId === item.id) syncMailDetail(item);
+    showToast(`Анализ готов — создана заявка ${ticketNumber(item.ticketId)}`);
+    return item.ticketId;
+  } catch (error) {
+    if (button) { button.disabled = false; button.textContent = 'Повторить анализ'; }
+    throw error;
+  }
+};
 
 requestText.addEventListener('input', () => { charCount.textContent = `${requestText.value.length} / 2000`; });
 $('#exampleButton').addEventListener('click', () => { requestText.value = example; requestText.dispatchEvent(new Event('input')); requestText.focus(); });
@@ -223,21 +311,38 @@ const createLocalTicket = (analysis = currentAnalysis, source = currentSource, d
 $('#createButton').addEventListener('click', () => { const id = createLocalTicket({ ...currentAnalysis, draft: $('#draftValue').textContent.trim() }); showToast(`Заявка ${ticketNumber(id)} создана`); });
 
 $('#mailList').addEventListener('click', async (event) => {
-  const button = event.target.closest('[data-mail-id]'); if (!button) return;
-  const item = mailItems.find((entry) => entry.id === button.dataset.mailId); if (!item) return;
-  if (item.analysis && item.ticketId) { openDetail(item.ticketId); return; }
-  button.disabled = true; button.textContent = 'Анализируем…';
-  try { const source = item.type === 'Письмо' ? 'Почта' : 'Телефон', analysis = await requestAnalysis(item.text, source); item.analysis = analysis; item.ticketId = createLocalTicket(analysis, source, item.text); persistMail(); renderAll(); showToast(`Анализ готов — создана заявка ${ticketNumber(item.ticketId)}`); }
-  catch (error) { button.disabled = false; button.textContent = 'Повторить анализ'; showToast(error instanceof Error ? error.message : 'Не удалось выполнить анализ'); }
+  const button = event.target.closest('[data-analyze-mail]');
+  if (button) {
+    event.stopPropagation(); const item = mailItems.find((entry) => entry.id === button.dataset.analyzeMail); if (!item) return;
+    try { await analyzeMailItem(item, button); } catch (error) { showToast(error instanceof Error ? error.message : 'Не удалось выполнить анализ'); }
+    return;
+  }
+  const target = event.target.closest('[data-open-mail]'); if (target) openMailDetail(target.dataset.openMail);
+});
+
+$('#analyzeAllMailButton').addEventListener('click', async (event) => {
+  const button = event.currentTarget, pending = mailItems.filter((item) => !item.analysis);
+  if (!pending.length) { showToast('Все сообщения уже проанализированы'); return; }
+  button.disabled = true;
+  let completed = 0;
+  for (const item of pending) {
+    button.textContent = `Анализируем ${completed + 1} из ${pending.length}…`;
+    try { await analyzeMailItem(item); completed += 1; } catch (error) { showToast(error instanceof Error ? error.message : 'Анализ остановлен'); break; }
+  }
+  button.textContent = 'Проанализировать все'; renderMail();
+  if (completed === pending.length) showToast(`Готово: проанализировано сообщений — ${completed}`);
 });
 
 document.addEventListener('click', (event) => {
   const editButton = event.target.closest('[data-edit-id]'); if (editButton) { event.stopPropagation(); openEditor(editButton.dataset.editId); return; }
+  const solutionTarget = event.target.closest('[data-solution-id]'); if (solutionTarget) { openSolutionDetail(solutionTarget.dataset.solutionId); return; }
   const ticketTarget = event.target.closest('[data-open-ticket]'); if (ticketTarget) openDetail(ticketTarget.dataset.openTicket);
 });
 document.addEventListener('keydown', (event) => {
   if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-open-ticket]')) { event.preventDefault(); openDetail(event.target.dataset.openTicket); return; }
-  if (event.key !== 'Escape') return; if (!themeMenu.hidden) { closeThemeMenu(); themeButton.focus(); } if (!editModal.hidden) closeEditor(); if (!detailModal.hidden) closeDetail();
+  if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-open-mail]')) { event.preventDefault(); openMailDetail(event.target.dataset.openMail); return; }
+  if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-solution-id]')) { event.preventDefault(); openSolutionDetail(event.target.dataset.solutionId); return; }
+  if (event.key !== 'Escape') return; if (!themeMenu.hidden) { closeThemeMenu(); themeButton.focus(); } if (!editModal.hidden) closeEditor(); if (!detailModal.hidden) closeDetail(); if (!mailDetailModal.hidden) closeMailDetail(); if (!solutionDetailModal.hidden) closeSolutionDetail();
 });
 $$('[data-view-link]').forEach((link) => link.addEventListener('click', (event) => { event.preventDefault(); showView(link.dataset.viewLink); }));
 $('#viewAllButton').addEventListener('click', () => showView('requests')); $('#newRequestButton').addEventListener('click', () => { showView('workspace'); setTimeout(() => requestText.focus(), 250); }); $('#menuButton').addEventListener('click', () => $('.sidebar').classList.toggle('open'));
@@ -245,9 +350,25 @@ $('#viewAllButton').addEventListener('click', () => showView('requests')); $('#n
 $('#resetFilters').addEventListener('click', () => { $('#requestSearch').value = ''; $('#categoryFilter').value = 'all'; $('#priorityFilter').value = 'all'; $('#statusFilter').value = 'all'; $('#sortSelect').value = 'date-desc'; renderTicketGrid(); });
 
 $('#detailEditButton').addEventListener('click', () => { const id = viewingTicketId; closeDetail(); openEditor(id); });
-$('#resolveTicketButton').addEventListener('click', () => { const ticket = tickets.find((item) => item.id === viewingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS) return; ticket.status = 'Решена'; persistTickets(); renderAll(); syncDetail(ticket); showToast(`Заявка ${ticketNumber(ticket.id)} отмечена как решённая`); });
-$('#escalateTicketButton').addEventListener('click', () => { const ticket = tickets.find((item) => item.id === viewingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS) return; ticket.status = ESCALATED_STATUS; persistTickets(); renderAll(); syncDetail(ticket); showToast(`Заявка ${ticketNumber(ticket.id)} передана старшему оператору`); });
+$('#resolveTicketButton').addEventListener('click', async (event) => {
+  const ticket = tickets.find((item) => item.id === viewingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS || ticket.status === 'Решена') return;
+  const button = event.currentTarget; button.disabled = true; button.textContent = 'Сохраняем решение…'; ticket.resolvedAt = new Date().toISOString();
+  try {
+    await storeSolution(ticket); ticket.status = 'Решена'; persistTickets(); renderAll(); syncDetail(ticket); loadSolutions(); showToast(`Заявка ${ticketNumber(ticket.id)} решена и добавлена в базу`);
+  } catch (error) {
+    delete ticket.resolvedAt; button.disabled = false; showToast(error instanceof Error ? error.message : 'Не удалось сохранить решение');
+  } finally { button.textContent = 'Отметить решённой'; }
+});
+$('#escalateTicketButton').addEventListener('click', () => { const ticket = tickets.find((item) => item.id === viewingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS || ticket.status === 'Решена') return; ticket.status = ESCALATED_STATUS; persistTickets(); renderAll(); syncDetail(ticket); showToast(`Заявка ${ticketNumber(ticket.id)} передана старшему оператору`); });
 $('#closeDetail').addEventListener('click', closeDetail); detailModal.addEventListener('click', (event) => { if (event.target === detailModal) closeDetail(); });
+$('#mailDetailAnalyzeButton').addEventListener('click', async (event) => {
+  const item = mailItems.find((entry) => entry.id === viewingMailId); if (!item) return;
+  if (item.analysis && item.ticketId) { closeMailDetail(); openDetail(item.ticketId); return; }
+  try { await analyzeMailItem(item, event.currentTarget); } catch (error) { showToast(error instanceof Error ? error.message : 'Не удалось выполнить анализ'); }
+});
+$('#closeMailDetail').addEventListener('click', closeMailDetail); mailDetailModal.addEventListener('click', (event) => { if (event.target === mailDetailModal) closeMailDetail(); });
+$('#closeSolutionDetail').addEventListener('click', closeSolutionDetail); solutionDetailModal.addEventListener('click', (event) => { if (event.target === solutionDetailModal) closeSolutionDetail(); });
+$('#refreshSolutionsButton').addEventListener('click', loadSolutions);
 $('#editForm').addEventListener('submit', (event) => {
   event.preventDefault(); const ticket = tickets.find((item) => item.id === editingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS) return;
   Object.assign(ticket, { description: $('#editDescription').value.trim(), summary: $('#editSummary').value.trim(), category: $('#editCategory').value, priority: $('#editPriority').value, missing: $('#editMissing').value.trim(), nextAction: $('#editNextAction').value.trim(), draft: $('#editDraftText').value.trim() });
@@ -262,4 +383,4 @@ const registerWebMcpTools = () => {
   register({ name: 'create_local_support_ticket', title: 'Создать локальную заявку', description: 'Создаёт заявку из текущего результата анализа.', inputSchema: { type: 'object', properties: {}, additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute() { const id = createLocalTicket(); return { id: ticketNumber(id), status: 'Новая', storage: 'local-demo' }; } });
 };
 
-syncThemeUi(); renderAll(); showView(location.hash.slice(1), false); registerWebMcpTools();
+syncThemeUi(); renderAll(); syncResolvedTickets().then(loadSolutions); showView(location.hash.slice(1), false); registerWebMcpTools();

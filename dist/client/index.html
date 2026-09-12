@@ -40,9 +40,10 @@
           Почта
           <span class="nav-count" id="mailCount">4</span>
         </a>
-        <a class="nav-item" href="#knowledge">
+        <a class="nav-item" href="#knowledge" data-view-link="knowledge">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H20v17H7.5A3.5 3.5 0 0 0 4 22z"/><path d="M4 5.5A3.5 3.5 0 0 0 7.5 9H20"/></svg>
-          База знаний
+          База решений
+          <span class="nav-count" id="knowledgeCount">0</span>
         </a>
       </nav>
 
@@ -226,8 +227,17 @@
         <div class="request-list" id="requestList"></div>
       </section>
 
-      <section class="knowledge-placeholder app-view" id="knowledge" data-view="workspace">
-        <p>База знаний появится на следующем этапе проекта.</p>
+      <section class="knowledge-page app-view" id="knowledge" data-view="knowledge" hidden>
+        <div class="requests-page-heading">
+          <div>
+            <p class="eyebrow">Опыт поддержки</p>
+            <h2>База решений <span id="totalSolutions">0</span></h2>
+            <p>Здесь хранятся только решённые обращения. ИИ использует похожие случаи как справочный контекст для новых заявок.</p>
+          </div>
+          <button class="secondary-button" id="refreshSolutionsButton" type="button">Обновить базу</button>
+        </div>
+        <div class="solution-state" id="solutionState">Загружаем решения…</div>
+        <div class="solution-list" id="solutionList"></div>
       </section>
 
       <section class="mail-page app-view" id="mail" data-view="mail" hidden>
@@ -237,9 +247,12 @@
             <h2>Почта <span id="totalMail">0</span></h2>
             <p>Письма и расшифровки разговоров в одном потоке. Отправьте обращение на анализ, чтобы получить структуру заявки.</p>
           </div>
-          <div class="mail-legend" aria-label="Типы обращений">
-            <span><i class="mail-dot"></i> Письмо</span>
-            <span><i class="call-dot"></i> Разговор</span>
+          <div class="mail-heading-actions">
+            <div class="mail-legend" aria-label="Типы обращений">
+              <span><i class="mail-dot"></i> Письмо</span>
+              <span><i class="call-dot"></i> Разговор</span>
+            </div>
+            <button class="primary-button compact" id="analyzeAllMailButton" type="button">Проанализировать все</button>
           </div>
         </div>
         <div class="mail-list" id="mailList"></div>
@@ -368,6 +381,42 @@
           <button class="primary-button compact" type="submit">Сохранить изменения</button>
         </div>
       </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="mailDetailModal" hidden>
+    <section class="edit-modal detail-modal" role="dialog" aria-modal="true" aria-labelledby="mailDetailTitle">
+      <header class="modal-header">
+        <div><p class="eyebrow" id="mailDetailType"></p><h2 id="mailDetailTitle"></h2></div>
+        <button class="icon-button" id="closeMailDetail" type="button" aria-label="Закрыть сообщение">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div class="detail-status-line" id="mailDetailMeta"></div>
+      <div class="detail-view-grid">
+        <section class="detail-view-block full"><span>Полный текст</span><p id="mailDetailText"></p></section>
+        <section class="detail-view-block full" id="mailDetailAnalysis" hidden><span>Результат анализа</span><p id="mailDetailAnalysisText"></p></section>
+      </div>
+      <footer class="detail-actions">
+        <button class="primary-button compact" id="mailDetailAnalyzeButton" type="button">Отправить на анализ</button>
+      </footer>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="solutionDetailModal" hidden>
+    <section class="edit-modal detail-modal" role="dialog" aria-modal="true" aria-labelledby="solutionDetailTitle">
+      <header class="modal-header">
+        <div><p class="eyebrow">Решённое обращение</p><h2 id="solutionDetailTitle"></h2></div>
+        <button class="icon-button" id="closeSolutionDetail" type="button" aria-label="Закрыть решение">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div class="detail-status-line" id="solutionDetailMeta"></div>
+      <div class="detail-view-grid">
+        <section class="detail-view-block full"><span>Текст обращения</span><p id="solutionDetailDescription"></p></section>
+        <section class="detail-view-block full"><span>Краткое описание</span><p id="solutionDetailSummary"></p></section>
+        <section class="detail-view-block full"><span>Черновик ответа</span><p id="solutionDetailDraft"></p></section>
+      </div>
     </section>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
