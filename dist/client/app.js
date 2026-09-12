@@ -1,7 +1,8 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const STORAGE_KEY = 'pulse-demo-tickets-v2';
-const THEME_STORAGE_KEY = 'pulse-theme';
+const STORAGE_KEY = 'line-demo-tickets-v2';
+const LEGACY_STORAGE_KEY = 'pulse-demo-tickets-v2';
+const THEME_STORAGE_KEY = 'line-theme';
 const THEMES = {
   light: 'Светлая', dark: 'Тёмная', graphite: 'Серо-чёрная',
   sber: 'Сбер', polar: 'Полярная ночь', ember: 'Тёплый графит'
@@ -73,7 +74,7 @@ const seedTickets = [
 const cloneSeed = () => seedTickets.map((ticket) => ({ ...ticket }));
 const loadTickets = () => {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY));
     return Array.isArray(saved) && saved.length ? saved : cloneSeed();
   } catch {
     return cloneSeed();
@@ -291,7 +292,7 @@ const showView = (view, updateHash = true) => {
   $$('[data-view-link]').forEach((link) => link.classList.toggle('active', link.dataset.viewLink === safeView));
   $('#pageEyebrow').textContent = safeView === 'requests' ? 'Работа с обращениями' : 'Рабочее пространство';
   $('#pageTitle').textContent = safeView === 'requests' ? 'Заявки' : 'Разбор обращения';
-  document.title = safeView === 'requests' ? 'Заявки — Пульс' : 'Пульс — помощник поддержки';
+  document.title = safeView === 'requests' ? 'Заявки — Линия' : 'Линия — помощник поддержки';
   if (safeView === 'requests') renderTicketGrid();
   if (updateHash) history.replaceState(null, '', safeView === 'requests' ? '#requests' : '#workspace');
   $('.sidebar').classList.remove('open');
