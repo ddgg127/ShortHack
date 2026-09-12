@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "liniya",
+  "name": "app",
   "main": "./dist/server/index.js",
   "compatibility_date": "2026-09-12",
   "assets": {
