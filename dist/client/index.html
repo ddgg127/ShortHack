@@ -252,6 +252,10 @@
               <span><i class="mail-dot"></i> Письмо</span>
               <span><i class="call-dot"></i> Разговор</span>
             </div>
+            <button class="secondary-button" id="createMailButton" type="button">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Создать обращение
+            </button>
             <button class="primary-button compact" id="analyzeAllMailButton" type="button">Проанализировать все</button>
           </div>
         </div>
@@ -379,6 +383,43 @@
         <div class="modal-actions">
           <button class="secondary-button" id="cancelEdit" type="button">Отмена</button>
           <button class="primary-button compact" type="submit">Сохранить изменения</button>
+        </div>
+      </form>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="createMailModal" hidden>
+    <section class="edit-modal" role="dialog" aria-modal="true" aria-labelledby="createMailTitle">
+      <header class="modal-header">
+        <div><p class="eyebrow">Новое входящее</p><h2 id="createMailTitle">Создать письмо или расшифровку</h2></div>
+        <button class="icon-button" id="closeCreateMail" type="button" aria-label="Закрыть форму">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form id="createMailForm">
+        <div class="form-grid">
+          <label class="form-field">Тип обращения
+            <select id="newMailType" required>
+              <option value="Письмо">Письмо</option>
+              <option value="Расшифровка разговора">Расшифровка разговора</option>
+            </select>
+          </label>
+          <label class="form-field">Автор или собеседник
+            <input id="newMailSender" type="text" maxlength="100" placeholder="Например, Анна Смирнова" required>
+          </label>
+          <label class="form-field full">Почта или данные звонка
+            <input id="newMailAddress" type="text" maxlength="140" placeholder="user@example.ru или Входящий звонок · 4:20" required>
+          </label>
+          <label class="form-field full">Тема
+            <input id="newMailSubject" type="text" maxlength="180" placeholder="Кратко опишите проблему" required>
+          </label>
+          <label class="form-field full">Текст обращения
+            <textarea id="newMailText" maxlength="2000" placeholder="Вставьте текст письма или расшифровку разговора…" required></textarea>
+          </label>
+        </div>
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelCreateMail" type="button">Отмена</button>
+          <button class="primary-button compact" type="submit">Создать обращение</button>
         </div>
       </form>
     </section>

@@ -77,6 +77,7 @@ const sourceOptions = $$('.source-option');
 const toast = $('#toast');
 const editModal = $('#editModal');
 const detailModal = $('#detailModal');
+const createMailModal = $('#createMailModal');
 const mailDetailModal = $('#mailDetailModal');
 const solutionDetailModal = $('#solutionDetailModal');
 const example = 'Здравствуйте! После смены телефона не получается войти в личный кабинет. Код подтверждения приходит на старый номер, доступа к нему уже нет. Мне срочно нужна ведомость для деканата сегодня. Что делать?';
@@ -274,6 +275,12 @@ const openEditor = (id) => {
   editModal.hidden = false; document.body.classList.add('modal-open'); $('#editDescription').focus();
 };
 const closeEditor = () => { editModal.hidden = true; document.body.classList.remove('modal-open'); editingTicketId = null; lastFocusedElement?.focus(); };
+const openCreateMail = () => {
+  lastFocusedElement = document.activeElement; createMailModal.hidden = false; document.body.classList.add('modal-open'); $('#newMailSender').focus();
+};
+const closeCreateMail = () => {
+  createMailModal.hidden = true; document.body.classList.remove('modal-open'); lastFocusedElement?.focus();
+};
 
 const syncMailDetail = (item) => {
   $('#mailDetailType').textContent = item.type; $('#mailDetailTitle').textContent = item.subject;
@@ -364,7 +371,7 @@ document.addEventListener('keydown', (event) => {
   if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-open-ticket]')) { event.preventDefault(); openDetail(event.target.dataset.openTicket); return; }
   if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-open-mail]')) { event.preventDefault(); openMailDetail(event.target.dataset.openMail); return; }
   if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-solution-id]')) { event.preventDefault(); openSolutionDetail(event.target.dataset.solutionId); return; }
-  if (event.key !== 'Escape') return; if (!themeMenu.hidden) { closeThemeMenu(); themeButton.focus(); } if (!editModal.hidden) closeEditor(); if (!detailModal.hidden) closeDetail(); if (!mailDetailModal.hidden) closeMailDetail(); if (!solutionDetailModal.hidden) closeSolutionDetail();
+  if (event.key !== 'Escape') return; if (!themeMenu.hidden) { closeThemeMenu(); themeButton.focus(); } if (!editModal.hidden) closeEditor(); if (!detailModal.hidden) closeDetail(); if (!createMailModal.hidden) closeCreateMail(); if (!mailDetailModal.hidden) closeMailDetail(); if (!solutionDetailModal.hidden) closeSolutionDetail();
 });
 $$('[data-view-link]').forEach((link) => link.addEventListener('click', (event) => { event.preventDefault(); showView(link.dataset.viewLink); }));
 $('#viewAllButton').addEventListener('click', () => showView('requests')); $('#newRequestButton').addEventListener('click', () => { showView('workspace'); setTimeout(() => requestText.focus(), 250); }); $('#menuButton').addEventListener('click', () => $('.sidebar').classList.toggle('open'));
@@ -385,6 +392,22 @@ $('#resolveTicketButton').addEventListener('click', async (event) => {
 });
 $('#escalateTicketButton').addEventListener('click', () => { const ticket = tickets.find((item) => item.id === viewingTicketId); if (!ticket || ticket.status === ESCALATED_STATUS || ticket.status === 'Решена') return; ticket.status = ESCALATED_STATUS; persistTickets(); renderAll(); syncDetail(ticket); showToast(`Заявка ${ticketNumber(ticket.id)} передана старшему оператору`); });
 $('#closeDetail').addEventListener('click', closeDetail); detailModal.addEventListener('click', (event) => { if (event.target === detailModal) closeDetail(); });
+$('#createMailButton').addEventListener('click', openCreateMail);
+$('#closeCreateMail').addEventListener('click', closeCreateMail); $('#cancelCreateMail').addEventListener('click', closeCreateMail);
+createMailModal.addEventListener('click', (event) => { if (event.target === createMailModal) closeCreateMail(); });
+$('#createMailForm').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const item = {
+    id: `created-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    type: $('#newMailType').value,
+    sender: $('#newMailSender').value.trim(),
+    address: $('#newMailAddress').value.trim(),
+    subject: $('#newMailSubject').value.trim(),
+    text: $('#newMailText').value.trim(),
+    date: new Date().toISOString()
+  };
+  mailItems.unshift(item); persistMail(); renderMail(); event.currentTarget.reset(); closeCreateMail(); showToast('Новое обращение добавлено в почту'); openMailDetail(item.id);
+});
 $('#mailDetailAnalyzeButton').addEventListener('click', async (event) => {
   const item = mailItems.find((entry) => entry.id === viewingMailId); if (!item) return;
   if (item.analysis && item.ticketId) { closeMailDetail(); openDetail(item.ticketId); return; }
