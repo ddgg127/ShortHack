@@ -151,6 +151,9 @@ textarea::placeholder { color: #4f5a65; }
 .orb::after { position: absolute; width: 9px; height: 9px; border: 0; background: var(--accent); box-shadow: 0 0 14px var(--accent); }
 .result-empty h3 { margin-bottom: 9px; font-size: 1rem; }
 .result-empty p { max-width: 350px; margin-bottom: 28px; color: var(--muted); font-size: .78rem; }
+.result-error { margin: 28px 0; padding: 18px; border: 1px solid rgba(255,185,104,.24); border-radius: 13px; background: rgba(255,185,104,.07); }
+.result-error strong { color: var(--warning); font-size: .9rem; }
+.result-error p { margin: 7px 0 0; color: #c8ced1; font-size: .8rem; line-height: 1.55; }
 .empty-schema { width: min(280px, 80%); display: grid; gap: 8px; }
 .empty-schema span { display: block; height: 7px; border-radius: 5px; background: #1e2630; }
 .empty-schema span:nth-child(2) { width: 78%; }

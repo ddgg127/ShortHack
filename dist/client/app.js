@@ -113,41 +113,19 @@ const showToast = (message) => {
   showToast.timer = window.setTimeout(() => toast.classList.remove('show'), 2600);
 };
 
-const demoAnalyze = (text) => {
-  const lower = text.toLowerCase();
-  const account = /войти|парол|аккаунт|кабинет|код подтверждения/.test(lower);
-  const network = /wi.?fi|интернет|сеть|подключ/.test(lower);
-  const equipment = /принтер|проектор|оборудован/.test(lower);
-  const urgent = /сроч|сегодня|немедленно|не могу работать|срок/.test(lower);
-  let category = 'Другое';
-  let missing = 'Контактные данные и точное время возникновения проблемы.';
-  let nextAction = 'Создать заявку и передать оператору первой линии.';
-  if (account) {
-    category = 'Учётная запись';
-    missing = 'Логин или корпоративная почта для проверки учётной записи.';
-    nextAction = 'Запросить логин и передать заявку команде управления доступом.';
-  } else if (network) {
-    category = 'Сеть и подключения';
-    missing = 'Устройство, корпус и название сети, к которой подключается пользователь.';
-    nextAction = 'Создать заявку для сетевой команды и запросить параметры подключения.';
-  } else if (equipment) {
-    category = 'Оборудование';
-    missing = 'Модель устройства, кабинет и инвентарный номер.';
-    nextAction = 'Передать обращение специалисту по оборудованию.';
-  }
-  const normalized = text.trim().replace(/\s+/g, ' ');
-  return {
-    description: text.trim(), summary: normalized.length > 145 ? `${normalized.slice(0, 142)}…` : normalized,
-    category, priority: urgent ? 'Высокий' : 'Обычный', missing, nextAction,
-    draft: account
-      ? 'Здравствуйте! Поможем восстановить доступ. Пожалуйста, пришлите логин или корпоративную почту — мы проверим учётную запись и предложим безопасный способ сменить номер.'
-      : 'Здравствуйте! Мы зафиксировали обращение. Пожалуйста, уточните недостающие данные — это поможет быстрее передать заявку нужной команде.',
-    source: currentSource, confidence: 94
-  };
+const requestAnalysis = async (text, source = currentSource) => {
+  const response = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ text, source })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || 'Не удалось выполнить анализ.');
+  return result;
 };
 
-const renderAnalysis = (text) => {
-  currentAnalysis = demoAnalyze(text);
+const renderAnalysis = (analysis) => {
+  currentAnalysis = analysis;
   $('#summaryValue').textContent = currentAnalysis.summary;
   $('#categoryValue').textContent = currentAnalysis.category;
   $('#priorityValue').innerHTML = `<i></i> ${currentAnalysis.priority}`;
@@ -155,7 +133,9 @@ const renderAnalysis = (text) => {
   $('#missingValue').textContent = currentAnalysis.missing;
   $('#actionValue').textContent = currentAnalysis.nextAction;
   $('#draftValue').textContent = currentAnalysis.draft;
+  $('.confidence strong').textContent = `${currentAnalysis.confidence}%`;
   emptyState.hidden = true;
+  $('#errorState').hidden = true;
   resultContent.hidden = false;
   return currentAnalysis;
 };
@@ -306,16 +286,26 @@ sourceOptions.forEach((option) => option.addEventListener('click', () => {
   option.classList.add('active'); currentSource = option.dataset.source;
 }));
 
-analyzeButton.addEventListener('click', () => {
+analyzeButton.addEventListener('click', async () => {
   const text = requestText.value.trim();
   if (!text) { requestText.focus(); showToast('Сначала добавьте текст обращения'); return; }
   analyzeButton.disabled = true;
   $('span', analyzeButton).textContent = 'Разбираем обращение…';
-  window.setTimeout(() => {
-    renderAnalysis(text);
-    analyzeButton.disabled = false;
+  $('#errorState').hidden = true;
+  try {
+    renderAnalysis(await requestAnalysis(text));
     $('span', analyzeButton).textContent = 'Проанализировать ещё раз';
-  }, 550);
+  } catch (error) {
+    currentAnalysis = null;
+    resultContent.hidden = true;
+    emptyState.hidden = true;
+    $('#errorMessage').textContent = error instanceof Error ? error.message : 'Не удалось выполнить анализ.';
+    $('#errorState').hidden = false;
+    showToast('Не удалось выполнить анализ');
+    $('span', analyzeButton).textContent = 'Повторить анализ';
+  } finally {
+    analyzeButton.disabled = false;
+  }
 });
 
 $('#editDraft').addEventListener('click', (event) => {
@@ -387,15 +377,15 @@ const registerWebMcpTools = () => {
   const register = (tool) => Promise.resolve(context.registerTool(tool, { signal: lifecycle.signal })).catch(() => {});
   register({
     name: 'analyze_support_request', title: 'Разобрать обращение',
-    description: 'Анализирует переданный текст локально в демо-режиме и показывает структурированный результат.',
+    description: 'Анализирует переданный текст с помощью Yandex AI и показывает структурированный результат.',
     inputSchema: { type: 'object', properties: { text: { type: 'string', minLength: 1, maxLength: 2000 }, source: { type: 'string', enum: ['Почта', 'Телефон'] } }, required: ['text'], additionalProperties: false },
     annotations: { readOnlyHint: false, untrustedContentHint: true },
-    execute(input) {
+    async execute(input) {
       if (!input || typeof input.text !== 'string' || !input.text.trim() || input.text.length > 2000) throw new Error('Текст должен содержать от 1 до 2000 символов');
       requestText.value = input.text.trim(); currentSource = input.source || 'Почта';
       sourceOptions.forEach((option) => option.classList.toggle('active', option.dataset.source === currentSource));
       requestText.dispatchEvent(new Event('input'));
-      const result = renderAnalysis(requestText.value);
+      const result = renderAnalysis(await requestAnalysis(requestText.value, currentSource));
       return { category: result.category, priority: result.priority, nextAction: result.nextAction };
     }
   });

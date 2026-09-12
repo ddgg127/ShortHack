@@ -1,0 +1,9 @@
+{
+  "name": "short-hack-pulse",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check dist/server/index.js && node --check dist/client/app.js",
+    "test": "node --test tests/worker.test.mjs"
+  }
+}
