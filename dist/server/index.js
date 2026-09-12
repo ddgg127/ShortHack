@@ -97,6 +97,14 @@ const analyze = async (request, env) => {
     return json({ error: `Текст должен содержать от 1 до ${MAX_TEXT_LENGTH} символов.` }, 400);
   }
 
+  if (env.API_RATE_LIMITER) {
+    const clientKey = request.headers.get('cf-connecting-ip') || 'unknown-client';
+    const { success } = await env.API_RATE_LIMITER.limit({ key: clientKey });
+    if (!success) {
+      return json({ error: 'Слишком много запросов. Подождите минуту и попробуйте снова.' }, 429);
+    }
+  }
+
   const payload = {
     model: env.YANDEX_MODEL_URI,
     temperature: 0.1,
